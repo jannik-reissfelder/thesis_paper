@@ -9,10 +9,10 @@ df = pd.read_parquet("./evaluation/groundtruth.gz")
 
 # define path variables
 # define augmentation scenario
-# AUGMENTATION = False
+AUGMENTATION = False
 # set the path to save according to the augmentation
-# AUGMENTATION_PATH = "non-augmentation" if not AUGMENTATION else "augmentation"
-AUGMENTATION_PATH = "artificial_species"
+AUGMENTATION_PATH = "non-augmentation" if not AUGMENTATION else "augmentation"
+# AUGMENTATION_PATH = "artificial_species"
 
 ####### FIRST PART #######
 # set file path
@@ -53,6 +53,10 @@ for file in files:
     # save the results
     # remove csv suffix from file
     file = os.path.splitext(file)[0]
+    # make sure the directory exists
+    if not os.path.exists(f"./evaluation/{AUGMENTATION_PATH}"):
+        os.makedirs(f"./evaluation/{AUGMENTATION_PATH}")
+    # save the results
     results_df.to_csv(f"./evaluation/{AUGMENTATION_PATH}/{file}_global_metrics.csv")
 
 
@@ -101,36 +105,40 @@ def plot_metric_from_dfs(errors, metric_name, sort=False):
     # plt.savefig(f"./evaluation/global/{AUGMENTATION_PATH}/{metric_name}_comparison.png")
     plt.show()
 
-# # set directory based on above setting
-# directory = f"./evaluation/global/{AUGMENTATION_PATH}"
-#
-# # Get only CSV files from the directory
-# files_predictions = [file for file in os.listdir(directory) if file.endswith('.csv')]
-#
-# # Initialize an empty DataFrame to hold all metrics
-# errors = pd.DataFrame()
-# # Load files and merge their specified metric into one DataFrame
-# for file in files_predictions:
-#     print("Loading file:", file)
-#     sub = pd.read_csv(os.path.join(directory, file), index_col=0)
-#
-#     # Extract the filename without the extension to use as the column prefix
-#     filename_without_ext = os.path.splitext(file)[0]
-#     # also drop "global_metrics" from the filename
-#     filename_without_ext = filename_without_ext.replace("_global_metrics", "")
-#     # also drop "predictions" from the filename
-#     filename_without_ext = filename_without_ext.replace("_predictions", "")
-#
-#     # Rename columns to include the filename as a prefix for distinction
-#     sub.columns = [filename_without_ext + '_' + col for col in sub.columns]
-#
-#     # Concatenate horizontally
-#     errors = pd.concat([errors, sub], axis=1)
-#     print("Loaded and concatenated:", file)
-#
-# # plot_metric_from_dfs(errors, 'JSD', sort=True)
-#
-# # write the mean of the errors to a csv file
-# errors_mean = errors.mean()
-# # errors_mean.to_csv(f"./evaluation/global/{AUGMENTATION_PATH}/mean_errors_over_algorithms_artificial_Fabaceae.csv")
+# set directory based on above setting
+directory = f"./evaluation/{AUGMENTATION_PATH}"
 
+# Get only CSV files from the directory
+files_predictions = [file for file in os.listdir(directory) if file.endswith('.csv')]
+# only get the ones which contain "predictions"
+files_predictions = [file for file in files_predictions if "predictions" in file]
+
+# Initialize an empty DataFrame to hold all metrics
+errors = pd.DataFrame()
+# Load files and merge their specified metric into one DataFrame
+for file in files_predictions:
+    print("Loading file:", file)
+    sub = pd.read_csv(os.path.join(directory, file), index_col=0)
+
+    # Extract the filename without the extension to use as the column prefix
+    filename_without_ext = os.path.splitext(file)[0]
+    # also drop "global_metrics" from the filename
+    filename_without_ext = filename_without_ext.replace("_global_metrics", "")
+    # also drop "predictions" from the filename
+    filename_without_ext = filename_without_ext.replace("_predictions", "")
+
+    # Rename columns to include the filename as a prefix for distinction
+    sub.columns = [filename_without_ext + '_' + col for col in sub.columns]
+
+    # Concatenate horizontally
+    errors = pd.concat([errors, sub], axis=1)
+    print("Loaded and concatenated:", file)
+
+plot_metric_from_dfs(errors, 'JSD', sort=True)
+
+# write the mean of the errors to a csv file
+errors_mean = errors.mean()
+errors_mean.to_csv(f"./evaluation/{AUGMENTATION_PATH}/mean_errors_over_algorithms.csv")
+
+
+print("debug")
