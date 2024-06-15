@@ -46,13 +46,13 @@ AUGMENTATION_PATH = "non-augmentation" if not AUGMENTATION else "augmentation"
 
 # Iterate over the all subspecies as holdouts
 # for each subspecies in subspecies we give it to the preprocessor
-for subspecies in df_red.index.unique():
+for subspecies in df_avg.index.unique():
     # store the ordering of the columns for later use
-    index_trues = df_red.iloc[:, feature_length:].loc[[subspecies]].columns
+    index_trues = df_avg.iloc[:, feature_length:].loc[[subspecies]].columns
     # copy the dataframe
-    df_input = df_red.copy()
+    df_input = df_avg.copy()
     print("Hold out subspecies:", subspecies)
-    preprocessor = PreprocessingClass(hold_out_species=subspecies, data=df_input, mapping=species_degree_mapping, use_augmentation=AUGMENTATION, feature_length=feature_length)
+    preprocessor = PreprocessingClass(hold_out_species=subspecies, data=df_input, use_augmentation=AUGMENTATION, feature_length=feature_length)
     preprocessor.run_all_methods()
 
     # get X_train and Y_train for training and prediction
@@ -60,13 +60,10 @@ for subspecies in df_red.index.unique():
     Y = preprocessor.Y_candidates_final
     # get X_hold_out and Y_hold_out to make predictions
     X_hold_out = preprocessor.X_hold_out
-    Y_hold_out = preprocessor.Y_candidates_hold_out
-    # get closest species
-    closest_species = preprocessor.closest
-
+    Y_hold_out = preprocessor.Y_hold_out
 
     # give to trainer class
-    trainer = TrainerClass(x_matrix=X, y_abundance_matrix=Y, x_hold_out=X_hold_out, y_hold_out=Y_hold_out, algorithm=ALGO_NAME, closest_species=closest_species)
+    trainer = TrainerClass(x_matrix=X, y_abundance_matrix=Y, x_hold_out=X_hold_out, y_hold_out=Y_hold_out, algorithm=ALGO_NAME)
     trainer.run_train_predict_based_on_algorithm()
     # retrieve predictions and cv_results from trainer
     predictions = trainer.predictions
@@ -83,7 +80,7 @@ for subspecies in df_red.index.unique():
     predictions_all_species = pd.concat([predictions_all_species, predictions_sorted], axis=1)
 
 # save the predictions based on the algorithm name
-predictions_all_species.to_csv(f"./predictions/{AUGMENTATION_PATH}/{ALGO_NAME}_predictions.csv")
+predictions_all_species.to_csv(f"./predictions/{AUGMENTATION_PATH}/{ALGO_NAME}_predictions_aligned.csv")
 print("Predictions saved")
 print("Process done!")
 
