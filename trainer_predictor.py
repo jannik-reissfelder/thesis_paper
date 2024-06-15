@@ -19,7 +19,6 @@ class TrainerClass:
                  x_hold_out: pd.DataFrame,
                  y_hold_out: pd.DataFrame,
                  algorithm: str,
-                 closest_species: list,
 
                  ):
 
@@ -28,7 +27,6 @@ class TrainerClass:
         self.Y_target_abundance = y_abundance_matrix
         self.X_hold_out = x_hold_out
         self.Y_hold_out = y_hold_out
-        self.closest_species = closest_species
         self.model = None
         self.cv_results = None
         self.cv_mse_scores = None
@@ -69,22 +67,6 @@ class TrainerClass:
             },
         }
 
-    def create_stratified_folds(self):
-        """
-        Create stratified folds for cross-validation based on species information in the index.
-        """
-        # Assuming the species information is stored in the index as the last level
-        # Adjust this according to your index structure
-        species = self.X_input_matrix.index.get_level_values(-1)
-        unique_species = np.unique(species)
-        species_to_int = {name: i for i, name in enumerate(unique_species)}
-        stratify_labels = np.array([species_to_int[specie] for specie in species])
-
-        skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
-        stratified_folds = list(skf.split(self.X_input_matrix, stratify_labels))
-
-        return stratified_folds
-
     def initialize_model(self):
         """
         initialize model
@@ -101,14 +83,8 @@ class TrainerClass:
         # Initialize model
         self.initialize_model()
 
-        if self.algorithm == "knn":
-            # aggreagte the species to get the mean abundance
-            self.Y_target_abundance = self.Y_target_abundance.groupby(self.Y_target_abundance.index).mean()
-            # same for the X_input_matrix
-            self.X_input_matrix = self.X_input_matrix.groupby(self.X_input_matrix.index).mean()
-
         # Create stratified folds
-        stratified_folds = self.create_stratified_folds() if self.algorithm != "knn" else 2
+        stratified_folds = 5
 
         # GridSearchCV with custom cv parameter
         grid_search = GridSearchCV(estimator=self.model,
