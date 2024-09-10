@@ -11,8 +11,9 @@ df = pd.read_parquet("./evaluation/groundtruth.gz")
 # define augmentation scenario
 AUGMENTATION = False
 # set the path to save according to the augmentation
-AUGMENTATION_PATH = "non-augmentation" if not AUGMENTATION else "augmentation"
-# AUGMENTATION_PATH = "artificial_species"
+# AUGMENTATION_PATH = "non-augmentation" if not AUGMENTATION else "augmentation"
+# AUGMENTATION_PATH = "sequences"
+AUGMENTATION_PATH = "GPR"
 
 ####### FIRST PART #######
 # set file path
@@ -22,6 +23,8 @@ files = os.listdir(file_path)
 
 for file in files:
     sub = pd.read_csv(os.path.join(file_path, file), index_col=0)
+    # only keep columns containing "mean" in the name
+    sub = sub[sub.columns[sub.columns.str.contains("mean")]]
     # reduce df.T to the same columsn as sub
     df_core = df[sub.index].T
     # concatenate both dataframes to compare
@@ -38,17 +41,19 @@ for file in files:
         print(species)
         # get any species by index name
         class_true_vs_predictions = df_with_prediction[df_with_prediction.index.to_series().str.contains(species)]
-        # compute the distance between the two samples using the JS divergence, wassterstein and bray-curtis
+        # skip if instance is less than 2
+        if class_true_vs_predictions.shape[0] < 2:
+            continue
+        # compute the distance between the two samples using the JS divergence, bray-curtis and bhattacharyya distance
         jsd = compute_JS_divergence(class_true_vs_predictions.iloc[0], class_true_vs_predictions.iloc[1])
-        wst = calculate_wasserstein_with_normalization(class_true_vs_predictions.iloc[0], class_true_vs_predictions.iloc[1])
         bc = compute_BC_dissimilarity(class_true_vs_predictions.iloc[0], class_true_vs_predictions.iloc[1])
         bhatt_c, bhatt_d = calculate_bhattacharyya_with_normalization(class_true_vs_predictions.iloc[0], class_true_vs_predictions.iloc[1])
 
         # store the results
-        results[species] = [jsd, wst, bc, bhatt_d]
+        results[species] = [jsd, bc, bhatt_d]
 
     # transform the dictionary to a dataframe
-    results_df = pd.DataFrame(results, index=["JSD", "WST", "BC", "Bhatt"]).T
+    results_df = pd.DataFrame(results, index=["JSD", "BC", "Bhatt"]).T
     print("debug")
     # save the results
     # remove csv suffix from file
