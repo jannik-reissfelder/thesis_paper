@@ -1,14 +1,17 @@
-### Main Script to run the entire pipeline
+"""
+Main Script to run the pipeline for Prepocessing and Training.
+The Evaluation is done in a separate script.
+"""
 
 import pandas as pd
-from helper_functions.preprocessing_functions import filter_targets, get_feature_length
+from helper_functions.preprocessing_functions import filter_targets_on_quantile, get_feature_length, filter_for_low_variance
 from preprocess import PreprocessingClass
 from trainer_predictor import TrainerClass
 import numpy as np
 
 # set base path
 base_path = "./data/Seeds/"
-dataset_name = "aligned_XY"
+dataset_name = "60_features"
 # build file path
 file_path = f"{base_path}{dataset_name}.gz"
 
@@ -26,11 +29,16 @@ print("Mean sample distribution:", mean_sample_distribution)
 
 
 
-# filter the targets
-df_red, microbes_left = filter_targets(df, feature_length)
+# filter out relevant microorganism from initial +10K individual species
+# step1: remove all zero abundance microbes based on quantile
+quantile = 0.85 #this can be modified
+df_red = filter_targets_on_quantile(df, feature_length, quantile)
+# step2: only keep low variance microbes
+cv = 0.2 # this can be modified, 0.5 for paper
+df_red, microbes_left = filter_for_low_variance(df, df_red, feature_length, cv)
 print("Number Microbes left:", len(microbes_left))
 
-# average the samples over the species
+# average the samples over the species (if we are not using Gaussian process regression)
 df_avg = df_red.groupby(df_red.index).mean()
 
 
@@ -38,14 +46,21 @@ df_avg = df_red.groupby(df_red.index).mean()
 predictions_all_species = pd.DataFrame()
 
 # set the algorithm to use
+# options are: "random_forest", "linear_regression", "elastic_net", "knn"
+# gaussian process is not used in this script as it is computationally expensive and needs GPU
+
+
 ALGO_NAME = "random_forest"
 # set augmentation to use
 AUGMENTATION = False
 # set the path to save according to the augmentation
+# Note: the augmentation method is depreciated, it is left here for potential future use
 AUGMENTATION_PATH = "non-augmentation" if not AUGMENTATION else "augmentation"
 
 # Iterate over the all subspecies as holdouts
-# for each subspecies in subspecies we give it to the preprocessor
+#  this is the leave-one-out approach
+# we train and fit each model on all but 1 species
+# the one species left out is used for prediction and evaluation
 for subspecies in df_avg.index.unique():
     # store the ordering of the columns for later use
     index_trues = df_avg.iloc[:, feature_length:].loc[[subspecies]].columns
@@ -80,7 +95,7 @@ for subspecies in df_avg.index.unique():
     predictions_all_species = pd.concat([predictions_all_species, predictions_sorted], axis=1)
 
 # save the predictions based on the algorithm name
-predictions_all_species.to_csv(f"./predictions/{AUGMENTATION_PATH}/{ALGO_NAME}_predictions_aligned.csv")
+predictions_all_species.to_csv(f"./predictions/{AUGMENTATION_PATH}/{ALGO_NAME}_predictions.csv")
 print("Predictions saved")
 print("Process done!")
 
