@@ -1,0 +1,10 @@
+matplotlib
+numpy
+pandas
+plotly
+scikit_bio
+scikit_learn
+scipy
+seaborn
+gpytorch
+optuna

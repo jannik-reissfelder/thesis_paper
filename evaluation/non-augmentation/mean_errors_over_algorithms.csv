@@ -1,0 +1,10 @@
+,0
+elastic_net_aligned_JSD,inf
+elastic_net_aligned_BC,0.6396125203099314
+elastic_net_aligned_Bhatt,inf
+linear_regression_aligned_JSD,inf
+linear_regression_aligned_BC,-0.48060249222511675
+linear_regression_aligned_Bhatt,inf
+random_forest_aligned_JSD,0.5178735661202067
+random_forest_aligned_BC,0.574693103239669
+random_forest_aligned_Bhatt,0.5472585812607925
