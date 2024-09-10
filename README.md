@@ -1,7 +1,11 @@
 # Predicting Microbial Community Composition from Plant Phylogeny
 
 ## Description
-This repository contains the source code for my master's thesis project titled "Predicting the Microbial Community Composition from Plant Phylogeny". The goal of this project is to utilize plant phylogenetic information to predict microbial community compositions for 60 different plant species. This repository provides all necessary tools to preprocess data, train the predictive models, and evaluate their performance against the ground truth data.
+This repository builds upon the source code of my master's thesis project titled "Predicting the Microbial Community Composition from Plant Phylogeny" which can be found here: 
+
+The goal of this project is to utilize plant phylogenetic information to predict microbial community compositions for 60 different plant species. This repository provides all necessary tools to preprocess data, train the predictive models, and evaluate their performance against the ground truth data.
+
+One important difference to the previous version of the paper is that this contains a seperate logic to model and prdict using the Gaussian Process Regression algorithm.
 
 ## Installation
 To set up this project, clone the repository and install the required dependencies.
